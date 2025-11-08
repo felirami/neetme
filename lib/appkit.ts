@@ -24,10 +24,6 @@ export const appKit = createAppKit({
     url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337',
     icons: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337'}/img/logo-192x192.png`]
   },
-  features: {
-    email: true,
-    socials: ['google', 'github', 'apple', 'x', 'discord'],
-  },
   themeMode: 'light',
   themeVariables: {
     '--w3m-accent': '#3b82f6',

@@ -83,10 +83,15 @@ In your Railway project settings, add these environment variables:
 
 ## Step 5: Update Reown Dashboard
 
+**Important:** You must add your Railway domain to Reown's allowed origins to fix CSP errors.
+
 1. Go to https://dashboard.reown.com
 2. Open your project settings
-3. Update the "Homepage URL" to your Railway domain
-4. Add your Railway domain to allowed origins
+3. Update the "Homepage URL" to your Railway domain (e.g., `https://your-app-name.railway.app`)
+4. **Add your Railway domain to "Allowed Origins"** - This is critical for fixing the CSP frame-ancestors error
+5. Save the changes
+
+**Note:** Features (email, socials) are managed remotely via the Reown dashboard. Local configuration in code is ignored.
 
 ## Step 6: Database Migrations
 
