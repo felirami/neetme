@@ -1,13 +1,12 @@
 import { useAppKit } from '@reown/appkit/react'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useAuth } from '../../lib/authContext'
 
 export default function SignIn() {
   const { open } = useAppKit()
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [createWallet, setCreateWallet] = useState(true)
 
   useEffect(() => {
     if (user && !loading) {
@@ -21,10 +20,7 @@ export default function SignIn() {
   }, [user, loading, router])
 
   const handleSignIn = () => {
-    // Store preference in sessionStorage for future reference
-    sessionStorage.setItem('createWallet', createWallet.toString())
-    // Open Reown modal - note that Reown will create wallets for social/email logins
-    // regardless of this preference, but users can choose to ignore the wallet
+    // Open Reown modal
     open()
   }
 
@@ -48,28 +44,6 @@ export default function SignIn() {
         <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
           Connect with your wallet, email, or social account
         </p>
-        
-        {/* Wallet Creation Option */}
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={createWallet}
-              onChange={(e) => setCreateWallet(e.target.checked)}
-              className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Enable wallet creation for social/email login
-              </span>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {createWallet 
-                  ? "A wallet will be created automatically when signing in with social accounts or email. You can use it later for Web3 features."
-                  : "Note: Reown will still create a wallet when using social/email login, but you can choose to ignore it and only use your existing wallet."}
-              </p>
-            </div>
-          </label>
-        </div>
         
         <button
           onClick={handleSignIn}

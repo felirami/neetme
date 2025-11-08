@@ -350,11 +350,12 @@ export default function Dashboard() {
       if (modal) {
         await modal.disconnect();
       }
-      router.push('/');
+      // Use window.location for full page reload to prevent redirect loops
+      window.location.href = '/';
     } catch (error) {
       console.error('Error disconnecting:', error);
       // Still redirect even if disconnect fails
-      router.push('/');
+      window.location.href = '/';
     }
   };
 

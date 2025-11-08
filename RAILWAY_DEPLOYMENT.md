@@ -90,26 +90,29 @@ In your Railway project settings, add these environment variables:
 
 ## Step 6: Run Database Migrations
 
-Railway will automatically run `npm run build` which includes Prisma generation, but you need to push the schema:
+**Important:** Database migrations cannot run during the build phase because the database is not accessible. You must run migrations **after** deployment.
+
+### Option 1: Using Railway Web Terminal (Recommended)
 
 1. In Railway, go to your service
-2. Click on "Deployments" → "View Logs"
-3. Open the Railway CLI or use the web terminal
-4. Run:
+2. Click on the service name
+3. Click on the "Deployments" tab
+4. Click on the latest deployment
+5. Click "View Logs" or use the web terminal
+6. Run:
    ```bash
    npx prisma db push
    ```
 
-Alternatively, you can add this to your `package.json` scripts and Railway will run it automatically:
+### Option 2: Using Railway CLI
 
-```json
-{
-  "scripts": {
-    "postinstall": "prisma generate",
-    "railway": "prisma db push && next build"
-  }
-}
-```
+1. Make sure you're linked to the project: `railway link`
+2. Run migrations:
+   ```bash
+   railway run npx prisma db push
+   ```
+
+**Note:** The build script only generates the Prisma client. Migrations must be run separately after deployment when the database is accessible.
 
 ## Step 7: Deploy
 
@@ -139,6 +142,7 @@ Alternatively, you can add this to your `package.json` scripts and Railway will 
 - Check Railway build logs for errors
 - Ensure all environment variables are set
 - Verify `package.json` scripts are correct
+- **If you see "Can't reach database server" during build:** This is normal. The database is not accessible during build. Run migrations after deployment using `npx prisma db push` in the Railway terminal.
 
 ### Image Upload Issues
 
