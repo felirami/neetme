@@ -88,31 +88,11 @@ In your Railway project settings, add these environment variables:
 3. Update the "Homepage URL" to your Railway domain
 4. Add your Railway domain to allowed origins
 
-## Step 6: Run Database Migrations
+## Step 6: Database Migrations
 
-**Important:** Database migrations cannot run during the build phase because the database is not accessible. You must run migrations **after** deployment.
+**Automatic:** Database migrations run automatically on every deployment startup. The `start` script runs `prisma db push` before starting the server, so your database schema will be automatically created/synced.
 
-### Option 1: Using Railway Web Terminal (Recommended)
-
-1. In Railway, go to your service
-2. Click on the service name
-3. Click on the "Deployments" tab
-4. Click on the latest deployment
-5. Click "View Logs" or use the web terminal
-6. Run:
-   ```bash
-   npx prisma db push
-   ```
-
-### Option 2: Using Railway CLI
-
-1. Make sure you're linked to the project: `railway link`
-2. Run migrations:
-   ```bash
-   railway run npx prisma db push
-   ```
-
-**Note:** The build script only generates the Prisma client. Migrations must be run separately after deployment when the database is accessible.
+No manual migration steps needed! 🎉
 
 ## Step 7: Deploy
 
@@ -142,7 +122,7 @@ In your Railway project settings, add these environment variables:
 - Check Railway build logs for errors
 - Ensure all environment variables are set
 - Verify `package.json` scripts are correct
-- **If you see "Can't reach database server" during build:** This is normal. The database is not accessible during build. Run migrations after deployment using `npx prisma db push` in the Railway terminal.
+- **Database migrations run automatically on startup** - no manual steps needed
 
 ### Image Upload Issues
 
