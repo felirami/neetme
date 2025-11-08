@@ -14,9 +14,18 @@ export default function Home({ isDev }: HomeProps) {
   const { open } = useAppKit();
   const router = useRouter();
 
-  const handleSignOut = () => {
-    modal.disconnect();
-    router.push('/');
+  const handleSignOut = async () => {
+    try {
+      // Disconnect using AppKit modal instance
+      if (modal) {
+        await modal.disconnect();
+      }
+      router.push('/');
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      // Still redirect even if disconnect fails
+      router.push('/');
+    }
   };
 
   return (
