@@ -24,5 +24,5 @@ fi
 
 # Start the server
 echo "✅ Starting Next.js standalone server..."
-exec NODE_OPTIONS='--no-warnings' node .next/standalone/server.js
-
+export NODE_OPTIONS='--no-warnings'
+exec node .next/standalone/server.js
