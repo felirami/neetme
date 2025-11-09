@@ -753,7 +753,7 @@ export default function Dashboard() {
                     onChange={(value) => setAboutMe(value || '')}
                     preview="edit" // Show only editor (no split view)
                     hideToolbar={false}
-                    visibleDragBar={false}
+                    visibleDragbar={false}
                     height={500}
                     data-color-mode="dark"
                     textareaProps={{
