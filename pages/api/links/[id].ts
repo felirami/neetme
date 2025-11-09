@@ -27,7 +27,7 @@ export default async function handler(
     }
 
     if (req.method === "PATCH") {
-      const { title, url, icon, order } = req.body;
+      const { title, url, icon, order, backgroundColor, textColor, iconColor } = req.body;
 
       const link = await prisma.link.findUnique({
         where: { id: id as string },
@@ -44,6 +44,9 @@ export default async function handler(
           ...(url && { url }),
           ...(icon !== undefined && { icon }),
           ...(order !== undefined && { order }),
+          ...(backgroundColor !== undefined && { backgroundColor }),
+          ...(textColor !== undefined && { textColor }),
+          ...(iconColor !== undefined && { iconColor }),
         },
       });
 
@@ -75,7 +78,7 @@ export default async function handler(
   }
 
   if (req.method === "PATCH") {
-    const { title, url, icon, order } = req.body;
+    const { title, url, icon, order, backgroundColor, textColor, iconColor } = req.body;
 
     // Verify the link belongs to the user
     const link = await prisma.link.findUnique({
@@ -93,6 +96,9 @@ export default async function handler(
         ...(url && { url }),
         ...(icon !== undefined && { icon }),
         ...(order !== undefined && { order }),
+        ...(backgroundColor !== undefined && { backgroundColor }),
+        ...(textColor !== undefined && { textColor }),
+        ...(iconColor !== undefined && { iconColor }),
       },
     });
 

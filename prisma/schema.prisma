@@ -68,6 +68,9 @@ model Link {
   url         String
   icon        String?  @db.Text // Base64 encoded image data or URL
   order       Int      @default(0)
+  backgroundColor String? // Custom background color (hex)
+  textColor       String? // Custom text color (hex)
+  iconColor       String? // Custom icon color (hex) - for Simple Icons
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)

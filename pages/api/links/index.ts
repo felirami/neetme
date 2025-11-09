@@ -8,7 +8,7 @@ export default async function handler(
 ) {
   // Dev mode: Allow direct access with userId
   if (process.env.NODE_ENV !== 'production' && req.body?.userId && req.headers['x-user-address'] === 'dev-mode') {
-    const { userId, title, url, icon } = req.body
+    const { userId, title, url, icon, backgroundColor, textColor, iconColor } = req.body
 
     if (req.method === "POST") {
       if (!title || !url) {
@@ -27,6 +27,9 @@ export default async function handler(
           title,
           url,
           icon: icon || null,
+          backgroundColor: backgroundColor || null,
+          textColor: textColor || null,
+          iconColor: iconColor || null,
           userId,
           order: newOrder,
         },
@@ -51,7 +54,7 @@ export default async function handler(
   const { user } = auth;
 
   if (req.method === "POST") {
-    const { title, url, icon } = req.body;
+    const { title, url, icon, backgroundColor, textColor, iconColor } = req.body;
 
     if (!title || !url) {
       return res.status(400).json({ error: "Title and URL are required" });
@@ -70,6 +73,9 @@ export default async function handler(
         title,
         url,
         icon: icon || null,
+        backgroundColor: backgroundColor || null,
+        textColor: textColor || null,
+        iconColor: iconColor || null,
         userId: user.id,
         order: newOrder,
       },

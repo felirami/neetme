@@ -2,27 +2,152 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #0b0c10;
+  --foreground: #ffffff;
+  --neon-primary: #6AFF7F;
+  --neon-primary-alt: #7CFF6B;
+  --neon-secondary: #A3FFD6;
+  --gray-secondary: #9CA3AF;
+  --gray-tertiary: #6B7280;
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(180deg, #0b0c10 0%, #0f1015 100%);
+  font-family: 'Inter', 'Satoshi', system-ui, sans-serif;
+  /* Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Mobile-first: Ensure touch targets are at least 44x44px */
+button, a, input[type="button"], input[type="submit"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Improve form inputs on mobile */
+input, textarea, select {
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+@media (min-width: 640px) {
+  input, textarea, select {
+    font-size: inherit;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Neon glow utilities */
+  .glow-neon {
+    box-shadow: 0 0 10px rgba(106, 255, 127, 0.3), 0 0 20px rgba(106, 255, 127, 0.1);
+  }
+  
+  .glow-neon-md {
+    box-shadow: 0 0 20px rgba(106, 255, 127, 0.4), 0 0 40px rgba(106, 255, 127, 0.2);
+  }
+  
+  .glow-neon-lg {
+    box-shadow: 0 0 30px rgba(106, 255, 127, 0.5), 0 0 60px rgba(106, 255, 127, 0.3);
+  }
+  
+  .glow-neon-secondary {
+    box-shadow: 0 0 20px rgba(163, 255, 214, 0.3), 0 0 40px rgba(163, 255, 214, 0.1);
+  }
+  
+  /* Text glow */
+  .text-glow {
+    text-shadow: 0 0 10px rgba(106, 255, 127, 0.5), 0 0 20px rgba(106, 255, 127, 0.3);
+  }
+  
+  .text-glow-secondary {
+    text-shadow: 0 0 10px rgba(163, 255, 214, 0.5), 0 0 20px rgba(163, 255, 214, 0.3);
+  }
+}
+
+@layer components {
+  /* Button Styles */
+  .btn-neon {
+    @apply px-6 py-3 bg-neon-primary text-dark-bg font-semibold rounded-lg;
+    @apply transition-all duration-300 ease-in-out;
+    @apply hover:bg-neon-primary-alt hover:shadow-neon-md hover:scale-[1.02];
+    @apply active:scale-[0.98];
+    box-shadow: 0 0 10px rgba(106, 255, 127, 0.3), 0 0 20px rgba(106, 255, 127, 0.1);
+  }
+  
+  .btn-neon-outline {
+    @apply px-6 py-3 border-2 border-neon-primary text-neon-primary font-semibold rounded-lg;
+    @apply bg-transparent transition-all duration-300 ease-in-out;
+    @apply hover:bg-neon-primary hover:text-dark-bg hover:shadow-neon-md hover:scale-[1.02];
+    @apply active:scale-[0.98];
+    box-shadow: 0 0 10px rgba(106, 255, 127, 0.2);
+  }
+  
+  .btn-neon-secondary {
+    @apply px-6 py-3 bg-neon-secondary text-dark-bg font-semibold rounded-lg;
+    @apply transition-all duration-300 ease-in-out;
+    @apply hover:shadow-neon-secondary hover:scale-[1.02];
+    @apply active:scale-[0.98];
+  }
+  
+  /* Card Styles */
+  .card-neon {
+    @apply bg-dark-bg-alt border border-gray-tertiary/20 rounded-lg p-6;
+    @apply transition-all duration-300 ease-in-out;
+    @apply hover:border-neon-primary/50 hover:shadow-neon-sm;
+    background: rgba(15, 16, 21, 0.6);
+    backdrop-filter: blur(10px);
+  }
+  
+  .card-neon-glow {
+    @apply card-neon;
+    box-shadow: 0 0 20px rgba(106, 255, 127, 0.1), 0 0 40px rgba(106, 255, 127, 0.05);
+  }
+  
+  /* Text Styles */
+  .text-primary {
+    @apply text-gray-primary;
+  }
+  
+  .text-secondary {
+    @apply text-gray-secondary;
+  }
+  
+  .text-tertiary {
+    @apply text-gray-tertiary;
+  }
+  
+  .text-neon {
+    @apply text-neon-primary;
+  }
+  
+  .text-neon-secondary {
+    @apply text-neon-secondary;
+  }
+  
+  /* Input Styles */
+  .input-neon {
+    @apply bg-dark-bg-alt border border-gray-tertiary/30 rounded-lg px-4 py-3;
+    @apply text-gray-primary placeholder-gray-tertiary;
+    @apply focus:outline-none focus:border-neon-primary focus:shadow-neon-sm;
+    @apply transition-all duration-300 ease-in-out;
+    background: rgba(15, 16, 21, 0.8);
+  }
+  
+  /* Link Styles */
+  .link-neon {
+    @apply text-neon-primary transition-all duration-300 ease-in-out;
+    @apply hover:text-neon-primary-alt hover:text-glow;
   }
 }
 

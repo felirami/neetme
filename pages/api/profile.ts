@@ -8,7 +8,7 @@ export default async function handler(
 ) {
   // Dev mode: Allow direct access with userId
   if (process.env.NODE_ENV !== 'production' && req.body?.userId && req.headers['x-user-address'] === 'dev-mode') {
-    const { userId, bio, avatar } = req.body;
+    const { userId, bio, avatar, name } = req.body;
 
     if (req.method === "PATCH") {
       const updatedUser = await prisma.user.update({
@@ -16,11 +16,13 @@ export default async function handler(
         data: {
           ...(bio !== undefined && { bio }),
           ...(avatar !== undefined && { avatar }),
+          ...(name !== undefined && { name }),
         },
         select: {
           username: true,
           bio: true,
           avatar: true,
+          name: true,
         },
       });
 
@@ -34,18 +36,20 @@ export default async function handler(
   const { user } = auth;
 
   if (req.method === "PATCH") {
-    const { bio, avatar } = req.body;
+    const { bio, avatar, name } = req.body;
 
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         ...(bio !== undefined && { bio }),
         ...(avatar !== undefined && { avatar }),
+        ...(name !== undefined && { name }),
       },
       select: {
         username: true,
         bio: true,
         avatar: true,
+        name: true,
       },
     });
 

@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { useAuth } from "../lib/authContext";
 import { useAppKitAccount, useAppKit } from '@reown/appkit/react'
 import { modal } from '@reown/appkit/react'
 import { getSocialIconUrl, detectPlatformFromUrl, getPlatformSuggestions } from '../lib/socialIcons'
+import { getBrandColors } from '../lib/brandColors'
 import imageCompression from 'browser-image-compression'
 import { getDomain } from '../lib/utils'
 
@@ -13,6 +15,9 @@ interface Link {
   url: string;
   icon: string | null;
   order: number;
+  backgroundColor?: string | null;
+  textColor?: string | null;
+  iconColor?: string | null;
 }
 
 export default function Dashboard() {
@@ -22,11 +27,20 @@ export default function Dashboard() {
   const router = useRouter();
   const [links, setLinks] = useState<Link[]>([]);
   const [bio, setBio] = useState("");
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingUsername, setIsSavingUsername] = useState(false);
-  const [newLink, setNewLink] = useState({ title: "", url: "", icon: "" });
+  const [newLink, setNewLink] = useState({ 
+    title: "", 
+    url: "", 
+    icon: "",
+    backgroundColor: "",
+    textColor: "",
+    iconColor: ""
+  });
+  const [editingLink, setEditingLink] = useState<Link | null>(null);
   const [showAddLinkForm, setShowAddLinkForm] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ name: string; slug: string; url: string; iconUrl: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -38,6 +52,7 @@ export default function Dashboard() {
   const [customIconPreview, setCustomIconPreview] = useState<string | null>(null);
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const iconInputRef = useRef<HTMLInputElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -47,6 +62,9 @@ export default function Dashboard() {
         return
       }
       setBio(user.bio || "")
+      // Only set name if it's not a wallet address
+      const userName = user.name && !user.name.startsWith('0x') ? user.name : ""
+      setName(userName)
       setUsername(user.username || "")
       setAvatarPreview(user.avatar || user.image || null)
       fetchLinks()
@@ -79,19 +97,31 @@ export default function Dashboard() {
 
     setIsSaving(true);
     try {
+      // Get brand colors if not custom
+      const brandColors = getBrandColors(newLink.title);
+      const backgroundColor = newLink.backgroundColor || brandColors.backgroundColor;
+      const textColor = newLink.textColor || brandColors.textColor;
+      const iconColor = newLink.iconColor || brandColors.iconColor;
+
       const response = await fetch("/api/links", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "x-user-address": address,
         },
-        body: JSON.stringify({ ...newLink, address }),
+        body: JSON.stringify({ 
+          ...newLink, 
+          address,
+          backgroundColor,
+          textColor,
+          iconColor
+        }),
       });
 
       if (response.ok) {
         const link = await response.json();
         setLinks([...links, link]);
-        setNewLink({ title: "", url: "", icon: "" });
+        setNewLink({ title: "", url: "", icon: "", backgroundColor: "", textColor: "", iconColor: "" });
         setCustomIconPreview(null);
         setShowAddLinkForm(false);
         setShowSuggestions(false);
@@ -101,6 +131,39 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error adding link:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateLink = async (link: Link) => {
+    if (!address) return;
+    
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/links/${link.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-address": address,
+        },
+        body: JSON.stringify({ 
+          ...link,
+          address 
+        }),
+      });
+
+      if (response.ok) {
+        const updatedLink = await response.json();
+        setLinks(links.map(l => l.id === link.id ? updatedLink : l));
+        setEditingLink(null);
+        setToast({ message: 'Link updated successfully!', type: 'success' });
+        setTimeout(() => setToast(null), 3000);
+      }
+    } catch (error) {
+      console.error("Error updating link:", error);
+      setToast({ message: 'Failed to update link', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     } finally {
       setIsSaving(false);
     }
@@ -193,14 +256,14 @@ export default function Dashboard() {
           "Content-Type": "application/json",
           "x-user-address": address,
         },
-        body: JSON.stringify({ bio, address }),
+        body: JSON.stringify({ bio, name, address }),
       });
 
       if (response.ok) {
         await refreshUser();
       }
     } catch (error) {
-      console.error("Error updating bio:", error);
+      console.error("Error updating profile:", error);
     } finally {
       setIsSaving(false);
     }
@@ -350,7 +413,7 @@ export default function Dashboard() {
       if (modal) {
         await modal.disconnect();
       }
-      // Use window.location for full page reload to prevent redirect loops
+      // Redirect to home page after sign out
       window.location.href = '/';
     } catch (error) {
       console.error('Error disconnecting:', error);
@@ -361,10 +424,10 @@ export default function Dashboard() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-dark-gradient flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-primary mx-auto"></div>
+          <p className="mt-4 text-gray-secondary">Loading...</p>
         </div>
       </div>
     );
@@ -372,64 +435,125 @@ export default function Dashboard() {
 
   if (!user || !isConnected) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-dark-gradient flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in</h1>
-          <button
-            onClick={() => open()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Connect Wallet or Sign In
-          </button>
+          <h1 className="text-2xl font-bold mb-4 text-primary">Please sign in</h1>
+              <button
+                onClick={() => open()}
+                className="btn-neon"
+              >
+                Connect Wallet or Sign In
+              </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-16">
+    <div className="min-h-screen bg-dark-gradient">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-16">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8 flex justify-between items-center">
-            <h1 className="text-4xl font-bold">Dashboard</h1>
-            <div className="flex gap-4">
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center justify-between w-full sm:w-auto">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">Dashboard</h1>
+              {/* Mobile Hamburger Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="sm:hidden p-2 text-primary hover:text-neon-primary transition-colors"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+            {/* Desktop Menu */}
+            <div className="hidden sm:flex flex-row gap-4">
+              <Link
+                href="/"
+                className="btn-neon-outline"
+              >
+                Home
+              </Link>
               <a
                 href={`/${username || user.username}`}
                 target="_blank"
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                className="btn-neon-outline"
               >
                 View Profile
               </a>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                className="px-4 py-3 sm:py-2 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors min-h-[44px] flex items-center justify-center"
               >
                 Sign Out
               </button>
             </div>
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+              <div className="sm:hidden w-full flex flex-col gap-2 mt-2">
+                <Link
+                  href="/"
+                  className="btn-neon-outline text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <a
+                  href={`/${username || user.username}`}
+                  target="_blank"
+                  className="btn-neon-outline text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  View Profile
+                </a>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="px-4 py-3 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors min-h-[44px] flex items-center justify-center"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Dashboard Description */}
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-dark-bg-alt/50 border border-gray-tertiary/20 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-center">
+              <p className="text-sm sm:text-base text-gray-secondary leading-relaxed">
+                Customize your <span className="text-neon-primary font-medium">NeetMeTree</span> profile page. Edit your title, bio, and manage your links here.
+              </p>
+            </div>
           </div>
 
           {/* Profile Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 mb-6">
-            <h2 className="text-2xl font-semibold mb-4">Profile</h2>
+          <div className="card-neon p-4 sm:p-6 md:p-8 mb-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-primary">Profile</h2>
             
             {/* Avatar Section */}
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Profile Picture</label>
-              <div className="flex items-center gap-4">
+              <label className="block text-sm font-medium mb-3 text-primary text-center">Profile Picture</label>
+              <div className="flex flex-col items-center gap-4">
                 <div className="relative">
                   <img
                     src={avatarPreview || user.avatar || user.image || '/img/logo-128x128.png'}
                     alt="Profile"
-                    className="w-20 h-20 rounded-full border-2 border-gray-300 dark:border-gray-600 object-cover"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-gray-tertiary/30 object-cover"
                   />
                   {isUploadingAvatar && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neon-primary"></div>
                     </div>
                   )}
                 </div>
-                <div>
+                <div className="flex flex-col items-center w-full">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -440,11 +564,11 @@ export default function Dashboard() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingAvatar}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-neon-outline"
                   >
                     {isUploadingAvatar ? 'Uploading...' : 'Upload Photo'}
                   </button>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-tertiary mt-2 text-center">
                     Max 5MB. Will be compressed to ~200KB
                   </p>
                 </div>
@@ -453,88 +577,113 @@ export default function Dashboard() {
             
             {/* Username Section */}
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Username</label>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-gray-500 dark:text-gray-400">{getDomain()}/</span>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => {
-                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
-                    setUsername(value)
-                    setUsernameError('')
-                  }}
-                  className="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="yourusername"
-                  minLength={5}
-                  maxLength={30}
-                />
+              <label className="block text-sm font-medium mb-3 text-primary">Profile Link</label>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-gray-tertiary whitespace-nowrap text-sm sm:text-base">{getDomain()}/</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+                      setUsername(value)
+                      setUsernameError('')
+                    }}
+                    className="input-neon flex-1 min-h-[44px]"
+                    placeholder="yourusername"
+                    minLength={5}
+                    maxLength={30}
+                  />
+                </div>
                 <button
                   onClick={handleUpdateUsername}
                   disabled={isSavingUsername || username.length < 5 || username === user.username}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="btn-neon disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   {isSavingUsername ? "Saving..." : "Update"}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <p className="text-xs text-gray-tertiary mb-1">
+                This will be your profile link: {getDomain()}/{username || 'yourusername'}
+              </p>
+              <p className="text-xs text-gray-tertiary mb-1">
                 Minimum 5 characters. Only lowercase letters, numbers, hyphens, and underscores.
               </p>
               {usernameError && (
-                <p className="text-red-500 text-sm mt-1">{usernameError}</p>
+                <p className="text-red-400 text-sm mt-1">{usernameError}</p>
               )}
               {user.username && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Current profile: <a href={`/${user.username}`} target="_blank" className="text-blue-600 hover:underline">{getDomain()}/{user.username}</a>
+                <p className="text-sm text-gray-secondary mt-2">
+                  Current profile: <a href={`/${user.username}`} target="_blank" className="text-neon-primary hover:text-neon-primary-alt link-neon">{getDomain()}/{user.username}</a>
                   {username !== user.username && username.length >= 5 && (
-                    <span className="ml-2 text-gray-500">→ Will change to: {getDomain()}/{username}</span>
+                    <span className="ml-2 text-gray-tertiary">→ Will change to: {getDomain()}/{username}</span>
                   )}
                 </p>
               )}
             </div>
 
+            {/* Title Section */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2 text-primary">Title</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-neon w-full min-h-[44px]"
+                placeholder="NEET maximum"
+                maxLength={30}
+              />
+              <p className="text-xs text-gray-tertiary mt-1">
+                This will be shown as the title on your profile page ({name.length}/30)
+              </p>
+            </div>
+
             {/* Bio Section */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Bio</label>
+              <label className="block text-sm font-medium mb-2 text-primary">Bio</label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                className="input-neon w-full resize-y"
                 rows={3}
                 placeholder="Tell people about yourself..."
+                maxLength={160}
               />
+              <p className="text-xs text-gray-tertiary mt-1">
+                {bio.length}/160 characters
+              </p>
             </div>
             <button
               onClick={handleUpdateBio}
               disabled={isSaving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="btn-neon w-full sm:w-auto disabled:opacity-50"
             >
-              {isSaving ? "Saving..." : "Save Bio"}
+              {isSaving ? "Saving..." : "Save Profile"}
             </button>
           </div>
 
           {/* Links Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 mb-6">
-            <h2 className="text-2xl font-semibold mb-4">Links</h2>
+          <div className="card-neon p-4 sm:p-6 md:p-8 mb-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-primary">Links</h2>
             
             {/* Quick Add Social Links */}
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <h3 className="font-semibold mb-3">Quick Add Social Links</h3>
+            <div className="mb-6 p-3 sm:p-4 bg-dark-bg-alt/50 border border-gray-tertiary/20 rounded-lg">
+              <h3 className="font-semibold mb-3 text-sm sm:text-base text-primary">Quick Add Social Links</h3>
               <div className="mb-4">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Traditional Social</div>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="text-xs text-gray-tertiary mb-2">Traditional Social</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                   {[
                     { 
                       name: 'X (Twitter)', 
                       url: 'https://x.com/', 
-                      color: 'bg-black hover:bg-gray-800',
+                      color: 'bg-black hover:bg-gray-900 border-2 border-gray-700 hover:border-gray-600',
                       slug: 'x',
                       iconColor: 'FFFFFF'
                     },
                     { 
                       name: 'TikTok', 
                       url: 'https://www.tiktok.com/@', 
-                      color: 'bg-black hover:bg-gray-800',
+                      color: 'bg-black hover:bg-gray-900 border-2 border-gray-700 hover:border-gray-600',
                       slug: 'tiktok',
                       iconColor: 'FFFFFF'
                     },
@@ -566,10 +715,14 @@ export default function Dashboard() {
                         key={social.name}
                         onClick={() => {
                           setShowAddLinkForm(true);
+                          const brandColors = getBrandColors(social.name);
                           setNewLink({
                             title: social.name,
                             url: social.url,
                             icon: iconUrl,
+                            backgroundColor: brandColors.backgroundColor,
+                            textColor: brandColors.textColor,
+                            iconColor: brandColors.iconColor
                           });
                           setShowSuggestions(false);
                           // Scroll to the add link form after a brief delay to ensure it's rendered
@@ -577,23 +730,28 @@ export default function Dashboard() {
                             document.getElementById('add-link-form')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                           }, 100);
                         }}
-                        className={`${social.color} text-white p-4 rounded-lg transition-all hover:scale-105 flex flex-col items-center gap-2 text-sm font-medium shadow-md`}
+                        className={`${social.color} text-white p-4 rounded-lg transition-all hover:scale-105 flex flex-col items-center gap-2 text-sm font-medium shadow-md hover:shadow-neon-sm`}
                       >
-                        <img 
-                          src={iconUrl} 
-                          alt={social.name}
-                          className="w-8 h-8 object-contain"
-                          onError={(e) => {
-                            // Replace with fallback icon
-                            const img = e.currentTarget;
-                            img.style.display = 'none';
-                            const fallback = document.createElement('div');
-                            fallback.className = 'w-8 h-8 rounded bg-white/20 flex items-center justify-center text-white font-bold text-sm';
-                            fallback.textContent = social.name.charAt(0).toUpperCase();
-                            img.parentElement?.insertBefore(fallback, img);
-                          }}
-                        />
-                        <span className="text-xs">{social.name}</span>
+                        <div className="w-8 h-8 flex items-center justify-center">
+                          <img 
+                            src={iconUrl} 
+                            alt={social.name}
+                            className="w-full h-full object-contain"
+                            style={{ 
+                              filter: 'brightness(0) invert(1) drop-shadow(0 0 2px rgba(255,255,255,0.5))'
+                            }}
+                            onError={(e) => {
+                              // Replace with fallback icon
+                              const img = e.currentTarget;
+                              img.style.display = 'none';
+                              const fallback = document.createElement('div');
+                              fallback.className = 'w-8 h-8 rounded bg-white/30 flex items-center justify-center text-white font-bold text-sm';
+                              fallback.textContent = social.name.charAt(0).toUpperCase();
+                              img.parentElement?.insertBefore(fallback, img);
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs text-white font-medium drop-shadow-sm">{social.name}</span>
                       </button>
                     )
                   })}
@@ -601,8 +759,8 @@ export default function Dashboard() {
               </div>
               
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Web3 Platforms</div>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="text-xs text-gray-tertiary mb-2">Web3 Platforms</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                   {[
                     { 
                       name: 'Lens', 
@@ -646,10 +804,14 @@ export default function Dashboard() {
                         key={social.name}
                         onClick={() => {
                           setShowAddLinkForm(true);
+                          const brandColors = getBrandColors(social.name);
                           setNewLink({
                             title: social.name,
                             url: social.url,
                             icon: iconUrl,
+                            backgroundColor: brandColors.backgroundColor,
+                            textColor: brandColors.textColor,
+                            iconColor: brandColors.iconColor
                           });
                           setShowSuggestions(false);
                           // Scroll to the add link form after a brief delay to ensure it's rendered
@@ -657,23 +819,28 @@ export default function Dashboard() {
                             document.getElementById('add-link-form')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                           }, 100);
                         }}
-                        className={`${social.color} text-white p-4 rounded-lg transition-all hover:scale-105 flex flex-col items-center gap-2 text-sm font-medium shadow-md`}
+                        className={`${social.color} text-white p-4 rounded-lg transition-all hover:scale-105 flex flex-col items-center gap-2 text-sm font-medium shadow-md hover:shadow-neon-sm`}
                       >
-                        <img 
-                          src={iconUrl} 
-                          alt={social.name}
-                          className="w-8 h-8 object-contain"
-                          onError={(e) => {
-                            // Replace with fallback icon
-                            const img = e.currentTarget;
-                            img.style.display = 'none';
-                            const fallback = document.createElement('div');
-                            fallback.className = 'w-8 h-8 rounded bg-white/20 flex items-center justify-center text-white font-bold text-sm';
-                            fallback.textContent = social.name.charAt(0).toUpperCase();
-                            img.parentElement?.insertBefore(fallback, img);
-                          }}
-                        />
-                        <span className="text-xs">{social.name}</span>
+                        <div className="w-8 h-8 flex items-center justify-center">
+                          <img 
+                            src={iconUrl} 
+                            alt={social.name}
+                            className="w-full h-full object-contain"
+                            style={{ 
+                              filter: 'brightness(0) invert(1) drop-shadow(0 0 2px rgba(255,255,255,0.5))'
+                            }}
+                            onError={(e) => {
+                              // Replace with fallback icon
+                              const img = e.currentTarget;
+                              img.style.display = 'none';
+                              const fallback = document.createElement('div');
+                              fallback.className = 'w-8 h-8 rounded bg-white/30 flex items-center justify-center text-white font-bold text-sm';
+                              fallback.textContent = social.name.charAt(0).toUpperCase();
+                              img.parentElement?.insertBefore(fallback, img);
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs text-white font-medium drop-shadow-sm">{social.name}</span>
                       </button>
                     )
                   })}
@@ -689,24 +856,24 @@ export default function Dashboard() {
                   setShowSuggestions(true)
                   setSuggestions(getPlatformSuggestions(''))
                 }}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-2"
+                className="btn-neon w-full flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add Link
+                <span>Add Link</span>
               </button>
             ) : (
-              <div id="add-link-form" className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div id="add-link-form" className="mb-6 p-4 bg-dark-bg-alt/50 border border-gray-tertiary/20 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold">Add New Link</h3>
+                  <h3 className="font-semibold text-primary">Add New Link</h3>
                   <button
                     onClick={() => {
                       setShowAddLinkForm(false)
-                      setNewLink({ title: "", url: "", icon: "" })
+                      setNewLink({ title: "", url: "", icon: "", backgroundColor: "", textColor: "", iconColor: "" })
                       setShowSuggestions(false)
                     }}
-                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    className="text-gray-tertiary hover:text-neon-primary transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -725,6 +892,8 @@ export default function Dashboard() {
                         const title = e.target.value
                         // Auto-detect icon from title if it's a known platform
                         const iconUrl = getSocialIconUrl(title)
+                        // Auto-apply brand colors
+                        const brandColors = getBrandColors(title)
                         
                         // Show suggestions if typing
                         if (title.length > 0) {
@@ -739,7 +908,11 @@ export default function Dashboard() {
                         setNewLink({ 
                           ...newLink, 
                           title,
-                          icon: iconUrl || newLink.icon
+                          icon: iconUrl || newLink.icon,
+                          // Apply brand colors if not already customized
+                          backgroundColor: newLink.backgroundColor || brandColors.backgroundColor,
+                          textColor: newLink.textColor || brandColors.textColor,
+                          iconColor: newLink.iconColor || brandColors.iconColor
                         })
                       }}
                       onFocus={() => {
@@ -752,12 +925,12 @@ export default function Dashboard() {
                         // Delay hiding suggestions to allow click events
                         setTimeout(() => setShowSuggestions(false), 200)
                       }}
-                      className="w-full px-4 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500"
+                      className="input-neon w-full min-h-[44px]"
                     />
                     
                     {/* Suggestions dropdown */}
                     {showSuggestions && suggestions.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                      <div className="absolute z-50 w-full mt-1 bg-dark-bg-alt border border-gray-tertiary/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                         {suggestions.map((suggestion) => (
                           <button
                             key={suggestion.slug}
@@ -774,22 +947,27 @@ export default function Dashboard() {
                               })
                               setShowSuggestions(false)
                             }}
-                            className="w-full px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-left transition-colors"
+                            className="w-full px-4 py-3 hover:bg-dark-bg-alt/80 hover:border-neon-primary/30 flex items-center gap-3 text-left transition-colors text-primary"
                           >
-                            <img 
-                              src={suggestion.iconUrl} 
-                              alt={suggestion.name}
-                              className="w-6 h-6"
-                              onError={(e) => {
-                                // Replace with fallback
-                                const img = e.currentTarget;
-                                img.style.display = "none";
-                                const fallback = document.createElement("div");
-                                fallback.className = "w-6 h-6 rounded bg-blue-500 flex items-center justify-center text-white font-bold text-xs";
-                                fallback.textContent = suggestion.name.charAt(0).toUpperCase();
-                                img.parentElement?.insertBefore(fallback, img);
-                              }}
-                            />
+                            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                              <img 
+                                src={suggestion.iconUrl} 
+                                alt={suggestion.name}
+                                className="w-full h-full object-contain"
+                                style={{ 
+                                  filter: 'brightness(0) invert(1) drop-shadow(0 0 2px rgba(255,255,255,0.5))'
+                                }}
+                                onError={(e) => {
+                                  // Replace with fallback
+                                  const img = e.currentTarget;
+                                  img.style.display = "none";
+                                  const fallback = document.createElement("div");
+                                  fallback.className = "w-6 h-6 rounded bg-neon-primary/20 flex items-center justify-center text-neon-primary font-bold text-xs";
+                                  fallback.textContent = suggestion.name.charAt(0).toUpperCase();
+                                  img.parentElement?.insertBefore(fallback, img);
+                                }}
+                              />
+                            </div>
                             <span className="font-medium">{suggestion.name}</span>
                           </button>
                         ))}
@@ -817,18 +995,18 @@ export default function Dashboard() {
                         setNewLink({ ...newLink, url })
                       }
                     }}
-                    className="w-full px-4 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500"
+                    className="input-neon w-full min-h-[44px]"
                   />
                   
                   {/* Icon Section */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="block text-sm font-medium text-primary">
                       Icon (Optional)
                     </label>
                     
                     {/* Icon Preview */}
                     {(newLink.icon || customIconPreview) && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-600 rounded-lg">
+                      <div className="flex items-center gap-3 p-3 bg-dark-bg-alt/50 border border-gray-tertiary/20 rounded-lg">
                         {customIconPreview || newLink.icon ? (
                           <img 
                             src={customIconPreview || newLink.icon} 
@@ -839,18 +1017,18 @@ export default function Dashboard() {
                               const img = e.currentTarget;
                               img.style.display = "none";
                               const fallback = document.createElement("div");
-                              fallback.className = "w-8 h-8 rounded bg-blue-500 flex items-center justify-center text-white font-bold text-sm";
+                              fallback.className = "w-8 h-8 rounded bg-neon-primary flex items-center justify-center text-dark-bg font-bold text-sm";
                               fallback.textContent = newLink.title.charAt(0).toUpperCase() || "?";
                               img.parentElement?.insertBefore(fallback, img);
                             }}
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded bg-blue-500 flex items-center justify-center text-white font-bold text-sm">
+                          <div className="w-8 h-8 rounded bg-neon-primary flex items-center justify-center text-dark-bg font-bold text-sm">
                             {newLink.title.charAt(0).toUpperCase() || "?"}
                           </div>
                         )}
                         <div className="flex-1">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-sm text-gray-secondary">
                             {customIconPreview ? 'Custom icon' : 'Auto-detected icon'}
                           </span>
                         </div>
@@ -885,35 +1063,170 @@ export default function Dashboard() {
                         type="button"
                         onClick={() => iconInputRef.current?.click()}
                         disabled={isUploadingIcon}
-                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        className="btn-neon-outline disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                       >
                         {isUploadingIcon ? 'Uploading...' : 'Upload Custom Icon'}
                       </button>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-gray-tertiary">
                         Max 1MB, will be resized to 64x64px
                       </span>
                     </div>
+                  </div>
+                  
+                  {/* Color Customization */}
+                  <div className="space-y-3 pt-3 border-t border-gray-tertiary/30">
+                    <label className="block text-sm font-medium text-primary">
+                      Customize Colors (Optional)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-tertiary mb-1">Background</label>
+                        {(() => {
+                          const brandColors = getBrandColors(newLink.title);
+                          const isGradient = brandColors.isGradient || (brandColors.backgroundColor.includes('gradient') || brandColors.backgroundColor.includes('linear-gradient'));
+                          const bgColor = newLink.backgroundColor || brandColors.backgroundColor;
+                          const isCustomGradient = bgColor.includes('gradient') || bgColor.includes('linear-gradient');
+                          
+                          if (isGradient || isCustomGradient) {
+                            return (
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={bgColor}
+                                  onChange={(e) => setNewLink({ ...newLink, backgroundColor: e.target.value })}
+                                  placeholder="e.g., linear-gradient(45deg, #f09433, #bc1888)"
+                                  className="w-full px-3 py-2 text-xs border border-gray-tertiary/30 rounded-lg bg-dark-bg-alt text-primary placeholder-gray-tertiary"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const brandColors = getBrandColors(newLink.title)
+                                    setNewLink({ ...newLink, backgroundColor: brandColors.backgroundColor })
+                                  }}
+                                  className="w-full px-3 py-2 text-xs bg-dark-bg-alt border border-gray-tertiary/30 rounded hover:bg-dark-bg-alt/80 hover:border-neon-primary/50 text-primary transition-colors"
+                                  title="Reset to brand color"
+                                >
+                                  Reset
+                                </button>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={bgColor.startsWith('#') ? bgColor : `#${bgColor}`}
+                                onChange={(e) => setNewLink({ ...newLink, backgroundColor: e.target.value })}
+                                className="w-full h-10 rounded border border-gray-tertiary/30 cursor-pointer bg-dark-bg-alt"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const brandColors = getBrandColors(newLink.title)
+                                  setNewLink({ ...newLink, backgroundColor: brandColors.backgroundColor })
+                                }}
+                                className="px-3 py-2 text-xs bg-dark-bg-alt border border-gray-tertiary/30 rounded hover:bg-dark-bg-alt/80 hover:border-neon-primary/50 text-primary transition-colors"
+                                title="Reset to brand color"
+                              >
+                                Reset
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-tertiary mb-1">Text</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={newLink.textColor ? (newLink.textColor.startsWith('#') ? newLink.textColor : `#${newLink.textColor}`) : (getBrandColors(newLink.title).textColor.startsWith('#') ? getBrandColors(newLink.title).textColor : `#${getBrandColors(newLink.title).textColor}`)}
+                            onChange={(e) => setNewLink({ ...newLink, textColor: e.target.value })}
+                            className="w-full h-10 rounded border border-gray-tertiary/30 cursor-pointer bg-dark-bg-alt"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const brandColors = getBrandColors(newLink.title)
+                              setNewLink({ ...newLink, textColor: brandColors.textColor })
+                            }}
+                            className="px-3 py-2 text-xs bg-dark-bg-alt border border-gray-tertiary/30 rounded hover:bg-dark-bg-alt/80 hover:border-neon-primary/50 text-primary transition-colors"
+                            title="Reset to brand color"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-tertiary mb-1">Icon</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={newLink.iconColor || getBrandColors(newLink.title).iconColor || '000000'}
+                            onChange={(e) => setNewLink({ ...newLink, iconColor: e.target.value.replace('#', '') })}
+                            className="w-full h-10 rounded border border-gray-tertiary/30 cursor-pointer bg-dark-bg-alt"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const brandColors = getBrandColors(newLink.title)
+                              setNewLink({ ...newLink, iconColor: brandColors.iconColor })
+                            }}
+                            className="px-3 py-2 text-xs bg-dark-bg-alt border border-gray-tertiary/30 rounded hover:bg-dark-bg-alt/80 hover:border-neon-primary/50 text-primary transition-colors"
+                            title="Reset to brand color"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Preview */}
+                    {newLink.title && (
+                      <div className="mt-2 p-3 rounded-lg border border-gray-tertiary/30" 
+                        style={{ 
+                          background: newLink.backgroundColor || getBrandColors(newLink.title).backgroundColor,
+                          color: newLink.textColor || getBrandColors(newLink.title).textColor
+                        }}>
+                        <div className="flex items-center gap-3">
+                          {(newLink.icon || customIconPreview) && (
+                            <img 
+                              src={customIconPreview || newLink.icon || ''} 
+                              alt="Preview"
+                              className="w-6 h-6"
+                              style={{ 
+                                filter: newLink.iconColor && newLink.iconColor !== 'FFFFFF' && newLink.iconColor !== '000000'
+                                  ? undefined
+                                  : newLink.iconColor === 'FFFFFF' 
+                                    ? 'brightness(0) invert(1)' 
+                                    : undefined 
+                              }}
+                            />
+                          )}
+                          <span className="text-sm font-medium">{newLink.title}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddLink}
                       disabled={isSaving || !newLink.title || !newLink.url}
-                      className="flex-1 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                      className="btn-neon flex-1 disabled:opacity-50"
                     >
                       {isSaving ? "Adding..." : "Add Link"}
                     </button>
                     <button
                       onClick={() => {
                         setShowAddLinkForm(false)
-                        setNewLink({ title: "", url: "", icon: "" })
+                        setNewLink({ title: "", url: "", icon: "", backgroundColor: "", textColor: "", iconColor: "" })
                         setCustomIconPreview(null)
                         setShowSuggestions(false)
                         if (iconInputRef.current) {
                           iconInputRef.current.value = '';
                         }
                       }}
-                      className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                      className="btn-neon-outline"
                     >
                       Cancel
                     </button>
@@ -923,25 +1236,25 @@ export default function Dashboard() {
             )}
 
             {/* Existing Links */}
-            <div className="space-y-3">
+            <div className="space-y-3 mt-6">
               {links.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                <p className="text-gray-tertiary text-center py-8">
                   No links yet. Add your first link above!
                 </p>
               ) : (
                 links.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="flex items-center justify-between p-4 bg-dark-bg-alt/50 border border-gray-tertiary/20 rounded-lg"
                   >
                     <div className="flex-1">
-                      <h4 className="font-semibold">{link.title}</h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{link.url}</p>
+                      <h4 className="font-semibold text-primary">{link.title}</h4>
+                      <p className="text-sm text-gray-tertiary">{link.url}</p>
                     </div>
                     <button
                       onClick={() => handleDeleteLink(link.id)}
                       disabled={isSaving}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                      className="px-4 py-3 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white disabled:opacity-50 transition-colors min-h-[44px] flex items-center justify-center whitespace-nowrap"
                     >
                       Delete
                     </button>
@@ -959,7 +1272,7 @@ export default function Dashboard() {
           <div
             className={`px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 ${
               toast.type === 'success'
-                ? 'bg-green-500 text-white'
+                ? 'bg-neon-primary text-dark-bg shadow-neon-md'
                 : 'bg-red-500 text-white'
             }`}
           >
