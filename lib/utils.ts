@@ -5,7 +5,7 @@
 export function getBaseUrl(): string {
   // Server-side: use environment variable
   if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337'
+    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   }
   
   // Client-side: use window.location or environment variable

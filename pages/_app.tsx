@@ -1,6 +1,6 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { AuthContext } from '../lib/authContext'
 import Head from 'next/head'
 import ContextProvider from '@/context'
@@ -14,7 +14,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (!isConnected || !address) {
       setUser(null)
       setLoading(false)
@@ -40,11 +40,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [address, isConnected])
 
   useEffect(() => {
     refreshUser()
-  }, [address, isConnected])
+  }, [refreshUser])
 
   useEffect(() => {
     if (!isConnected && user) {

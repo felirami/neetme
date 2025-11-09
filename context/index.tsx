@@ -15,8 +15,8 @@ const queryClient = new QueryClient()
 const metadata = {
   name: 'NeetMeTree',
   description: 'Your personal link hub',
-  url: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337',
-  icons: [`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337'}/img/logo-192x192.png`],
+  url: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  icons: [`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/img/logo-192x192.png`],
 }
 
 // Initialize AppKit *outside* the component render cycle
