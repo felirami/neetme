@@ -24,5 +24,6 @@ fi
 
 # Start the server
 echo "✅ Starting Next.js standalone server..."
-export NODE_OPTIONS='--no-warnings'
+# Next.js standalone server automatically reads PORT from environment
+# NODE_OPTIONS is optional - only suppresses warnings
 exec node .next/standalone/server.js
