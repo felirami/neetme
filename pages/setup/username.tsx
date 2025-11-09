@@ -29,10 +29,10 @@ export default function UsernameSetup() {
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-dark-gradient flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-primary mx-auto"></div>
+          <p className="mt-4 text-gray-secondary">Loading...</p>
         </div>
       </div>
     )
@@ -88,22 +88,29 @@ export default function UsernameSetup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
-        <h1 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          Choose Your Username
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
-          Your profile will be available at <span className="font-semibold">{getDomain()}/{username || 'username'}</span>
-        </p>
+    <div className="min-h-screen bg-dark-gradient flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+      <div className="max-w-md w-full card-neon-glow p-8 sm:p-10">
+        <div className="text-center mb-6">
+          <img 
+            src="/img/logo-192x192.png" 
+            alt="NeetMeTree Logo" 
+            className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4"
+          />
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-neon-primary text-glow">
+            Choose Your Username
+          </h1>
+          <p className="text-gray-secondary text-sm sm:text-base">
+            Your profile will be available at <span className="font-semibold text-neon-primary">{getDomain()}/{username || 'username'}</span>
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium mb-2">
+            <label htmlFor="username" className="block text-sm font-medium mb-2 text-primary">
               Username
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 dark:text-gray-400">{getDomain()}/</span>
+              <span className="text-gray-tertiary whitespace-nowrap text-sm sm:text-base">{getDomain()}/</span>
               <input
                 id="username"
                 type="text"
@@ -113,7 +120,7 @@ export default function UsernameSetup() {
                   setUsername(value)
                   setError('')
                 }}
-                className="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-neon flex-1 min-h-[44px]"
                 placeholder="yourusername"
                 minLength={5}
                 maxLength={30}
@@ -122,24 +129,24 @@ export default function UsernameSetup() {
                 autoFocus
               />
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-gray-tertiary mt-1">
               Minimum 5 characters. Only lowercase letters, numbers, hyphens, and underscores.
             </p>
             {error && (
-              <p className="text-red-500 text-sm mt-2">{error}</p>
+              <p className="text-red-400 text-sm mt-2">{error}</p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={loading || username.length < 5}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-neon w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating...' : 'Create Profile'}
           </button>
         </form>
 
-        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
+        <p className="text-xs text-gray-tertiary text-center mt-6">
           You can change this later in your dashboard settings
         </p>
       </div>

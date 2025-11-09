@@ -578,32 +578,38 @@ export default function Dashboard() {
             {/* Username Section */}
             <div className="mb-6">
               <label className="block text-sm font-medium mb-3 text-primary">Profile Link</label>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="text-gray-tertiary whitespace-nowrap text-sm sm:text-base">{getDomain()}/</span>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => {
-                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
-                      setUsername(value)
-                      setUsernameError('')
-                    }}
-                    className="input-neon flex-1 min-h-[44px]"
-                    placeholder="yourusername"
-                    minLength={5}
-                    maxLength={30}
-                  />
+              <div className="space-y-3 mb-2">
+                {/* Domain prefix - show separately on mobile */}
+                <div className="sm:hidden">
+                  <span className="text-gray-tertiary text-xs">{getDomain()}/</span>
                 </div>
-                <button
-                  onClick={handleUpdateUsername}
-                  disabled={isSavingUsername || username.length < 5 || username === user.username}
-                  className="btn-neon disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                >
-                  {isSavingUsername ? "Saving..." : "Update"}
-                </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="hidden sm:inline text-gray-tertiary text-sm flex-shrink-0">{getDomain()}/</span>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+                        setUsername(value)
+                        setUsernameError('')
+                      }}
+                      className="input-neon flex-1 min-w-0 min-h-[44px] text-sm sm:text-base"
+                      placeholder="yourusername"
+                      minLength={5}
+                      maxLength={30}
+                    />
+                  </div>
+                  <button
+                    onClick={handleUpdateUsername}
+                    disabled={isSavingUsername || username.length < 5 || username === user.username}
+                    className="btn-neon disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:whitespace-nowrap"
+                  >
+                    {isSavingUsername ? "Saving..." : "Update"}
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-gray-tertiary mb-1">
+              <p className="text-xs text-gray-tertiary mb-1 break-words">
                 This will be your profile link: {getDomain()}/{username || 'yourusername'}
               </p>
               <p className="text-xs text-gray-tertiary mb-1">
