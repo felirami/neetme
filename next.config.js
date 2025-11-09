@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone', // Optimize for Docker deployments - reduces image size and speeds up Docker export/import
   async headers() {
     return [
       {
