@@ -12,7 +12,9 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "npm run build"
+  "npm run build",
+  "cp -r public .next/standalone/public || true",
+  "cp -r .next/static .next/standalone/.next/static || true"
 ]
 
 [start]
