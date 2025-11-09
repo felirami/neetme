@@ -24,6 +24,9 @@ fi
 
 # Start the server
 echo "✅ Starting Next.js standalone server..."
-# Next.js standalone server automatically reads PORT from environment
-# NODE_OPTIONS is optional - only suppresses warnings
+# Ensure PORT is set (Railway provides this automatically)
+# Default to 8080 if not set (Railway's default)
+export PORT=${PORT:-8080}
+echo "📡 Server will listen on port: $PORT"
+# Next.js standalone server reads PORT from environment automatically
 exec node .next/standalone/server.js
