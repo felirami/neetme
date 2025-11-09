@@ -33,11 +33,26 @@ if (!projectId) {
     networks: networks,
     defaultNetwork: mainnet, // Or your preferred default
     metadata,
-    features: { analytics: true }, // Optional features
-    themeMode: 'light',
-    themeVariables: {
-      '--w3m-accent': '#3b82f6',
+    features: { 
+      analytics: true,
+      email: true,
+      socials: ['google', 'x'], // Only show Google and X as main social options
+      emailShowWallets: true,
     },
+    themeMode: 'dark',
+    themeVariables: {
+      '--w3m-accent': '#6AFF7F',
+    },
+    // Featured wallets will appear first in the modal
+    // Phantom is prioritized first since it's the primary wallet for this platform
+    featuredWalletIds: [
+      'a797aa35c0fadbfc1a53e7f675162ed5226968b44a19ee3d24385c64d1d3c393', // Phantom (Solana) - Primary wallet
+      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+      '1ae92b26df02f24cac19a58e759176a8b51c0c0c8b8b8b8b8b8b8b8b8b8b8b8b', // Rainbow Wallet
+    ],
+    // Show all wallets but featured ones appear first
+    enableWallets: true,
+    showWallets: true,
   })
 }
 
