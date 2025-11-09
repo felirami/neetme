@@ -13,7 +13,8 @@ const nextConfig = {
     domains: ['ipfs.io', 'cdn.zerion.io'],
   },
   reactStrictMode: true,
-  output: 'standalone', // Optimize for Docker deployments - reduces image size and speeds up Docker export/import
+  // Only use standalone output in production builds (causes webpack issues in dev)
+  ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
   async headers() {
     return [
       {

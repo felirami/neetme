@@ -43,6 +43,17 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [address, isConnected])
 
   useEffect(() => {
+    // Initial load - ensure loading resolves after a short delay
+    const timer = setTimeout(() => {
+      if (!isConnected) {
+        setLoading(false)
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
     refreshUser()
   }, [refreshUser])
 
@@ -50,7 +61,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isConnected && user) {
       setUser(null)
     }
-  }, [isConnected])
+  }, [isConnected, user])
 
   // Redirect to username setup if connected but no username
   useEffect(() => {
@@ -105,7 +116,7 @@ export default function App({ Component, pageProps }: AppProps) {
             if (!document.querySelector(`link[href="${link3.href}"]`)) {
               document.head.appendChild(link3);
             }
-          }, 500); // Reduced delay
+          }, 500);
         }
       };
       

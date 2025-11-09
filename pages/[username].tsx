@@ -67,11 +67,15 @@ export default function ProfilePage({ user, links }: ProfilePageProps) {
         <div className="max-w-2xl mx-auto">
           {/* Profile Header */}
           <div className="card-neon-glow p-6 sm:p-8 mb-6 text-center">
-            <div className="mb-4 sm:mb-6">
+            <div className="mb-4 sm:mb-6 rounded-lg">
               <img
                 src={avatarUrl}
                 alt={displayTitle}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto border-4 border-neon-primary"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto"
+                style={{
+                  filter: 'drop-shadow(0 0 8px rgba(106, 255, 127, 0.3)) drop-shadow(0 0 15px rgba(106, 255, 127, 0.15))',
+                  boxShadow: '0 0 10px rgba(106, 255, 127, 0.2), 0 0 20px rgba(106, 255, 127, 0.1)'
+                }}
               />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-3 text-primary">{displayTitle}</h1>
