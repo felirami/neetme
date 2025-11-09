@@ -16,5 +16,5 @@ cmds = [
 ]
 
 [start]
-cmd = "NODE_OPTIONS='--no-warnings' node .next/standalone/server.js"
+cmd = "sh start.sh"
 
