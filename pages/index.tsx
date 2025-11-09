@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { modal } from '@reown/appkit/react'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface HomeProps {
   isDev?: boolean;
@@ -15,6 +15,33 @@ export default function Home({ isDev }: HomeProps) {
   const { open } = useAppKit();
   const { isConnected } = useAppKitAccount();
   const router = useRouter();
+  const hasRedirected = useRef(false);
+
+  // Auto-redirect to dashboard when user connects and has username
+  useEffect(() => {
+    if (!authLoading && isConnected && authUser && !hasRedirected.current) {
+      if (authUser.username && !authUser.username.startsWith('temp_')) {
+        // User has username - redirect to dashboard
+        hasRedirected.current = true;
+        const timer = setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000); // Small delay to let modal close
+        return () => clearTimeout(timer);
+      } else if (authUser.username && authUser.username.startsWith('temp_')) {
+        // User needs to set username - redirect to setup
+        hasRedirected.current = true;
+        const timer = setTimeout(() => {
+          router.push('/setup/username');
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+    
+    // Reset redirect flag when disconnected
+    if (!isConnected) {
+      hasRedirected.current = false;
+    }
+  }, [authUser, authLoading, isConnected, router]);
 
   const handleSignOut = async () => {
     try {
@@ -38,15 +65,15 @@ export default function Home({ isDev }: HomeProps) {
           <div className="mb-6 sm:mb-8 flex justify-center">
             <img 
               src="/img/logo-192x192.png" 
-              alt="NeetMeTree Logo" 
+              alt="NEET.me Logo" 
               className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
             />
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 text-neon-primary text-glow">
-            NeetMeTree
+            NEET.me
           </h1>
           <p className="text-lg sm:text-xl text-gray-secondary mb-8 sm:mb-12 px-4">
-            Your personal link hub. Connect all your important links in one place.
+            Create your own personal page. For people who are Not In Employment, Education or Training
           </p>
 
           {authLoading ? (
@@ -118,4 +145,3 @@ export const getServerSideProps: GetServerSideProps = async () => {
     },
   };
 };
-

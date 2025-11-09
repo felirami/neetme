@@ -8,6 +8,7 @@ const nextConfig = {
 
     return config;
   },
+  transpilePackages: ['@uiw/react-md-editor', '@uiw/react-markdown-preview'],
   images: {
     domains: ['ipfs.io', 'cdn.zerion.io'],
   },

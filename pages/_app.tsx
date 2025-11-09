@@ -78,6 +78,38 @@ export default function App({ Component, pageProps }: AppProps) {
     // Set cookies on client-side for SSR hydration
     if (typeof document !== 'undefined') {
       setCookies(document.cookie || null)
+      
+      // Load markdown editor CSS only when on dashboard page, with delay
+      const loadMarkdownCSS = () => {
+        if (window.location.pathname === '/dashboard') {
+          setTimeout(() => {
+            // Load react-markdown-editor-lite CSS
+            const link1 = document.createElement('link');
+            link1.rel = 'stylesheet';
+            link1.href = '/css/markdown-editor.css';
+            if (!document.querySelector(`link[href="${link1.href}"]`)) {
+              document.head.appendChild(link1);
+            }
+            
+            // Load @uiw/react-md-editor CSS files
+            const link2 = document.createElement('link');
+            link2.rel = 'stylesheet';
+            link2.href = '/css/mdeditor.css';
+            if (!document.querySelector(`link[href="${link2.href}"]`)) {
+              document.head.appendChild(link2);
+            }
+            
+            const link3 = document.createElement('link');
+            link3.rel = 'stylesheet';
+            link3.href = '/css/markdown-preview.css';
+            if (!document.querySelector(`link[href="${link3.href}"]`)) {
+              document.head.appendChild(link3);
+            }
+          }, 500); // Reduced delay
+        }
+      };
+      
+      loadMarkdownCSS();
     }
   }, [])
 

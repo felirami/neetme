@@ -1,6 +1,6 @@
 # Railway Deployment Guide
 
-This guide will help you deploy NeetMeTree to Railway.
+This guide will help you deploy NEET.me to Railway.
 
 ## Prerequisites
 

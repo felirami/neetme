@@ -4,6 +4,8 @@ import { getBrandColors } from "../lib/brandColors";
 import Link from "next/link";
 import { useAuth } from "../lib/authContext";
 import { useAppKitAccount } from '@reown/appkit/react'
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ProfilePageProps {
   user: {
@@ -12,6 +14,7 @@ interface ProfilePageProps {
     bio: string | null;
     avatar: string | null;
     image: string | null;
+    aboutMe: string | null;
   };
   links: Array<{
     id: string;
@@ -73,7 +76,50 @@ export default function ProfilePage({ user, links }: ProfilePageProps) {
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-3 text-primary">{displayTitle}</h1>
             {user.bio && (
-              <p className="text-sm sm:text-base text-secondary px-4">{user.bio}</p>
+              <p className="text-sm sm:text-base text-secondary px-4 mb-4">{user.bio}</p>
+            )}
+            {user.aboutMe && (
+              <div className="mt-6 pt-6 border-t border-gray-tertiary/20">
+                <div className="prose prose-invert prose-sm sm:prose-base max-w-none px-2 sm:px-4 md:px-6 text-left">
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-bold text-primary mb-3 mt-2" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-bold text-primary mb-2 mt-5" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-base sm:text-lg font-semibold text-primary mb-2 mt-4" {...props} />,
+                      p: ({node, ...props}) => <p className="text-sm sm:text-base text-gray-secondary mb-3 leading-relaxed" {...props} />,
+                      a: ({node, ...props}) => <a className="text-neon-primary hover:text-neon-primary-alt underline break-words" target="_blank" rel="noopener noreferrer" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc list-inside text-gray-secondary mb-3 space-y-1.5 ml-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal list-inside text-gray-secondary mb-3 space-y-1.5 ml-2" {...props} />,
+                      li: ({node, ...props}) => <li className="text-sm sm:text-base leading-relaxed" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-semibold text-primary" {...props} />,
+                      em: ({node, ...props}) => <em className="italic" {...props} />,
+                      code: ({node, inline, ...props}: any) => inline ? (
+                        <code className="bg-dark-bg-alt px-1.5 py-0.5 rounded text-xs font-mono text-neon-primary border border-gray-tertiary/20" {...props} />
+                      ) : (
+                        <code className="block bg-dark-bg-alt px-3 py-2 rounded text-xs font-mono text-neon-primary border border-gray-tertiary/20 overflow-x-auto my-3" {...props} />
+                      ),
+                      pre: ({node, ...props}) => (
+                        <pre className="bg-dark-bg-alt px-3 py-2 rounded text-xs font-mono text-neon-primary border border-gray-tertiary/20 overflow-x-auto my-3" {...props} />
+                      ),
+                      blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-neon-primary/30 pl-4 italic text-gray-tertiary my-3 py-1" {...props} />,
+                      hr: ({node, ...props}) => <hr className="border-gray-tertiary/20 my-4" {...props} />,
+                      table: ({node, ...props}) => (
+                        <div className="overflow-x-auto my-4">
+                          <table className="min-w-full border-collapse border border-gray-tertiary/20 rounded" {...props} />
+                        </div>
+                      ),
+                      thead: ({node, ...props}) => <thead className="bg-dark-bg-alt" {...props} />,
+                      tbody: ({node, ...props}) => <tbody className="bg-dark-bg-alt/50" {...props} />,
+                      tr: ({node, ...props}) => <tr className="border-b border-gray-tertiary/20" {...props} />,
+                      th: ({node, ...props}) => <th className="px-3 py-2 text-left text-xs sm:text-sm font-semibold text-primary border-r border-gray-tertiary/20 last:border-r-0" {...props} />,
+                      td: ({node, ...props}) => <td className="px-3 py-2 text-xs sm:text-sm text-gray-secondary border-r border-gray-tertiary/20 last:border-r-0" {...props} />,
+                    }}
+                  >
+                    {user.aboutMe}
+                  </ReactMarkdown>
+                </div>
+              </div>
             )}
           </div>
 
@@ -190,7 +236,7 @@ export default function ProfilePage({ user, links }: ProfilePageProps) {
               href="/"
               className="text-gray-tertiary hover:text-neon-primary text-sm transition-colors"
             >
-              Create your own NeetMeTree →
+              Create your own NEET.me →
             </Link>
           </div>
         </div>
@@ -223,6 +269,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       bio: true,
       avatar: true,
       image: true,
+      aboutMe: true,
     },
   });
 

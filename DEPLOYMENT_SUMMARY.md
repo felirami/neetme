@@ -1,4 +1,4 @@
-# NeetMeTree - Railway Deployment Summary
+# NEET.me - Railway Deployment Summary
 
 ## ✅ Changes Made for Railway Deployment
 

@@ -64,6 +64,7 @@ export default async function handler(
       email: user.email,
       avatar: user.avatar,
       bio: user.bio,
+      aboutMe: user.aboutMe,
       address: normalizedAddress,
     })
   } catch (error: any) {

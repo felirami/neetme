@@ -19,8 +19,8 @@ export default async function handler(
       return res.status(400).json({ error: 'Username is required' })
     }
 
-    if (username.length < 5) {
-      return res.status(400).json({ error: 'Username must be at least 5 characters long' })
+    if (username.length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters long' })
     }
 
     if (username.length > 30) {
@@ -85,8 +85,8 @@ export default async function handler(
     return res.status(400).json({ error: 'Username is required' })
   }
 
-  if (username.length < 5) {
-    return res.status(400).json({ error: 'Username must be at least 5 characters long' })
+  if (username.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters long' })
   }
 
   if (username.length > 30) {

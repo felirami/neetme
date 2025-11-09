@@ -1,4 +1,4 @@
-# NeetMeTree - Linktree Clone
+# NEET.me - Linktree Clone
 
 A modern link-in-bio platform where users sign in with wallet, email, or social accounts and get their own personalized page at `domain.com/[username]`.
 

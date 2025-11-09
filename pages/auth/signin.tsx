@@ -41,11 +41,11 @@ export default function SignIn() {
         <div className="text-center mb-6">
           <img 
             src="/img/logo-192x192.png" 
-            alt="NeetMeTree Logo" 
+            alt="NEET.me Logo" 
             className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4"
           />
           <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-neon-primary text-glow">
-            Sign in to NeetMeTree
+            Sign in to NEET.me
           </h1>
           <p className="text-gray-secondary text-sm sm:text-base">
             Connect with your wallet, email, or social account

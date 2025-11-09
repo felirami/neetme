@@ -19,7 +19,7 @@ GitHub is the easiest and fastest to set up:
    - Click "New OAuth App"
 
 2. **Fill in the form:**
-   - **Application name**: `NeetMeTree` (or your app name)
+   - **Application name**: `NEET.me` (or your app name)
    - **Homepage URL**: `http://localhost:1337` (for local dev)
    - **Authorization callback URL**: `http://localhost:1337/api/auth/callback/github`
    - Click "Register application"

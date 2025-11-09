@@ -8,6 +8,41 @@ import { getSocialIconUrl, detectPlatformFromUrl, getPlatformSuggestions } from 
 import { getBrandColors } from '../lib/brandColors'
 import imageCompression from 'browser-image-compression'
 import { getDomain } from '../lib/utils'
+import dynamic from 'next/dynamic'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+
+// Dynamically import markdown editor to avoid SSR issues
+const MdEditor = dynamic(
+  () => import('react-markdown-editor-lite'),
+  { ssr: false }
+)
+
+// Dynamically import WYSIWYG markdown editor
+// Load CSS separately to avoid Next.js build errors
+const MDEditorWYSIWYG = dynamic(
+  () => {
+    // Load CSS files dynamically
+    if (typeof window !== 'undefined') {
+      const link1 = document.createElement('link');
+      link1.rel = 'stylesheet';
+      link1.href = '/css/mdeditor.css';
+      if (!document.querySelector(`link[href="${link1.href}"]`)) {
+        document.head.appendChild(link1);
+      }
+      
+      const link2 = document.createElement('link');
+      link2.rel = 'stylesheet';
+      link2.href = '/css/markdown-preview.css';
+      if (!document.querySelector(`link[href="${link2.href}"]`)) {
+        document.head.appendChild(link2);
+      }
+    }
+    
+    return import('@uiw/react-md-editor').then((mod) => mod.default);
+  },
+  { ssr: false }
+)
 
 interface Link {
   id: string;
@@ -28,6 +63,7 @@ export default function Dashboard() {
   const [links, setLinks] = useState<Link[]>([]);
   const [bio, setBio] = useState("");
   const [name, setName] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -53,25 +89,45 @@ export default function Dashboard() {
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const iconInputRef = useRef<HTMLInputElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [useFullEditor, setUseFullEditor] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      // Check if user needs to set username
-      if (!user.username || user.username.startsWith('temp_')) {
-        router.push('/setup/username')
-        return
-      }
-      setBio(user.bio || "")
-      // Only set name if it's not a wallet address
-      const userName = user.name && !user.name.startsWith('0x') ? user.name : ""
-      setName(userName)
-      setUsername(user.username || "")
-      setAvatarPreview(user.avatar || user.image || null)
-      fetchLinks()
-    } else if (!authLoading && !isConnected) {
-      router.push('/auth/signin')
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
     }
-  }, [user, authLoading, isConnected])
+
+    // If not connected, redirect to sign in (but wait a bit in case connection is still initializing)
+    if (!isConnected) {
+      const timer = setTimeout(() => {
+        if (!isConnected) {
+          router.push('/auth/signin');
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
+    // If connected but no user data yet, wait (user might still be loading)
+    if (!user) {
+      return;
+    }
+
+    // If user exists but needs to set username, redirect to setup
+    if (!user.username || user.username.startsWith('temp_')) {
+      router.push('/setup/username');
+      return;
+    }
+
+    // User is connected and has username - load dashboard data
+    setBio(user.bio || "");
+    setAboutMe((user as any).aboutMe || "");
+    // Only set name if it's not a wallet address
+    const userName = user.name && !user.name.startsWith('0x') ? user.name : "";
+    setName(userName);
+    setUsername(user.username || "");
+    setAvatarPreview(user.avatar || user.image || null);
+    fetchLinks();
+  }, [user, authLoading, isConnected, router]);
 
   const fetchLinks = async () => {
     if (!user?.id || !address) return;
@@ -196,8 +252,8 @@ export default function Dashboard() {
     if (!address) return;
     
     // Validate username
-    if (username.length < 5) {
-      setUsernameError('Username must be at least 5 characters long')
+    if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters long')
       return
     }
 
@@ -256,14 +312,18 @@ export default function Dashboard() {
           "Content-Type": "application/json",
           "x-user-address": address,
         },
-        body: JSON.stringify({ bio, name, address }),
+        body: JSON.stringify({ bio, name, aboutMe, address }),
       });
 
       if (response.ok) {
         await refreshUser();
+        setToast({ message: 'Profile updated successfully!', type: 'success' });
+        setTimeout(() => setToast(null), 3000);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
+      setToast({ message: 'Failed to update profile. Please try again.', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     } finally {
       setIsSaving(false);
     }
@@ -528,7 +588,7 @@ export default function Dashboard() {
           <div className="mb-6 sm:mb-8">
             <div className="bg-dark-bg-alt/50 border border-gray-tertiary/20 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-center">
               <p className="text-sm sm:text-base text-gray-secondary leading-relaxed">
-                Customize your <span className="text-neon-primary font-medium">NeetMeTree</span> profile page. Edit your title, bio, and manage your links here.
+                Customize your <span className="text-neon-primary font-medium">NEET.me</span> profile page. Edit your title, bio, and manage your links here.
               </p>
             </div>
           </div>
@@ -602,7 +662,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={handleUpdateUsername}
-                    disabled={isSavingUsername || username.length < 5 || username === user.username}
+                    disabled={isSavingUsername || username.length < 3 || username === user.username}
                     className="btn-neon disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:whitespace-nowrap"
                   >
                     {isSavingUsername ? "Saving..." : "Update"}
@@ -613,7 +673,7 @@ export default function Dashboard() {
                 This will be your profile link: {getDomain()}/{username || 'yourusername'}
               </p>
               <p className="text-xs text-gray-tertiary mb-1">
-                Minimum 5 characters. Only lowercase letters, numbers, hyphens, and underscores.
+                Minimum 3 characters. Only lowercase letters, numbers, hyphens, and underscores.
               </p>
               {usernameError && (
                 <p className="text-red-400 text-sm mt-1">{usernameError}</p>
@@ -667,6 +727,97 @@ export default function Dashboard() {
               {isSaving ? "Saving..." : "Save Profile"}
             </button>
           </div>
+
+          {/* About Me Section */}
+          {!loading && user && (
+            <div className="card-neon p-4 sm:p-6 md:p-8 mb-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-primary">About Me</h2>
+                {/* Full Editor toggle - hidden for now, keeping code for future development */}
+                {/* <button
+                  onClick={() => setUseFullEditor(!useFullEditor)}
+                  className="btn-neon-outline text-xs sm:text-sm px-3 sm:px-4 py-2"
+                >
+                  {useFullEditor ? '📝 Simple Editor' : '📄 Full Editor'}
+                </button> */}
+              </div>
+              <p className="text-xs text-gray-tertiary mb-4">
+                Write about yourself using Markdown. Use markdown syntax like **bold**, *italic*, # headings, and [links](url).
+              </p>
+              
+              {/* Full Editor - hidden for now, keeping code for future development */}
+              {false && useFullEditor ? (
+                <div className="mb-4">
+                  <MDEditorWYSIWYG
+                    value={aboutMe}
+                    onChange={(value) => setAboutMe(value || '')}
+                    preview="edit" // Show only editor (no split view)
+                    hideToolbar={false}
+                    visibleDragBar={false}
+                    height={500}
+                    data-color-mode="dark"
+                    textareaProps={{
+                      placeholder: 'Start typing your markdown here... Use the toolbar above for formatting.',
+                    }}
+                  />
+                  {aboutMe && (
+                    <div className="mt-4 p-4 sm:p-6 bg-dark-bg-alt/50 border border-neon-primary/20 rounded-lg">
+                      <p className="text-xs text-neon-primary mb-3 font-semibold flex items-center gap-2">
+                        <span>✨</span> Live Preview
+                      </p>
+                      <div className="prose prose-invert prose-sm max-w-none">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-bold text-primary mb-2" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-bold text-primary mb-2 mt-4" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-base sm:text-lg font-semibold text-primary mb-1 mt-3" {...props} />,
+                            p: ({node, ...props}) => <p className="text-sm sm:text-base text-gray-secondary mb-2" {...props} />,
+                            a: ({node, ...props}) => <a className="text-neon-primary hover:text-neon-primary-alt underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc list-inside text-gray-secondary mb-2 space-y-1" {...props} />,
+                            ol: ({node, ...props}) => <ol className="list-decimal list-inside text-gray-secondary mb-2 space-y-1" {...props} />,
+                            li: ({node, ...props}) => <li className="text-sm sm:text-base" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-semibold text-primary" {...props} />,
+                            em: ({node, ...props}) => <em className="italic" {...props} />,
+                            code: ({node, ...props}) => <code className="bg-dark-bg-alt px-1 py-0.5 rounded text-xs font-mono text-neon-primary" {...props} />,
+                            blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-neon-primary/30 pl-4 italic text-gray-tertiary my-2" {...props} />,
+                          }}
+                        >
+                          {aboutMe}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <textarea
+                    value={aboutMe}
+                    onChange={(e) => setAboutMe(e.target.value)}
+                    placeholder="Write about yourself using Markdown...&#10;&#10;Example:&#10;# About Me&#10;&#10;This is my bio. I can use **bold**, *italic*, and [links](https://example.com)."
+                    className="input-neon w-full min-h-[400px] sm:min-h-[500px] font-mono text-sm p-4 resize-y"
+                    style={{ minHeight: '400px' }}
+                  />
+                  <p className="text-xs text-gray-tertiary mt-2">
+                    💡 Tip: Use markdown syntax like **bold**, *italic*, # headings, and [links](url). Switch to Full Editor for formatting tools.
+                  </p>
+                </div>
+              )}
+              
+              <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <p className="text-xs text-gray-tertiary">
+                  Your content will be displayed on your profile page with markdown formatting.
+                </p>
+                <button
+                  onClick={handleUpdateBio}
+                  disabled={isSaving}
+                  className="btn-neon-outline text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                >
+                  {isSaving ? "Saving..." : "Save About Me"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Links Section */}
           <div className="card-neon p-4 sm:p-6 md:p-8 mb-6">

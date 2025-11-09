@@ -15,7 +15,7 @@ This app now uses **Reown** (formerly WalletConnect) for authentication, which p
 2. Sign up or log in (free)
 3. Click "Create New Project"
 4. Fill in:
-   - **Project Name**: `NeetMeTree`
+   - **Project Name**: `NEET.me`
    - **Homepage URL**: `http://localhost:1337` (for local dev)
 5. Copy your **Project ID**
 

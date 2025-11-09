@@ -13,7 +13,7 @@ import { mainnet } from '@reown/appkit/networks'
 const queryClient = new QueryClient()
 
 const metadata = {
-  name: 'NeetMeTree',
+  name: 'NEET.me',
   description: 'Your personal link hub',
   url: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   icons: [`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/img/logo-192x192.png`],

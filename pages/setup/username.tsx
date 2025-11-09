@@ -48,8 +48,8 @@ export default function UsernameSetup() {
     setError('')
     
     // Validate username
-    if (username.length < 5) {
-      setError('Username must be at least 5 characters long')
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters long')
       return
     }
 
@@ -93,7 +93,7 @@ export default function UsernameSetup() {
         <div className="text-center mb-6">
           <img 
             src="/img/logo-192x192.png" 
-            alt="NeetMeTree Logo" 
+            alt="NEET.me Logo" 
             className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4"
           />
           <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-neon-primary text-glow">
@@ -122,7 +122,7 @@ export default function UsernameSetup() {
                 }}
                 className="input-neon flex-1 min-h-[44px]"
                 placeholder="yourusername"
-                minLength={5}
+                minLength={3}
                 maxLength={30}
                 pattern="[a-z0-9_-]+"
                 required
@@ -130,7 +130,7 @@ export default function UsernameSetup() {
               />
             </div>
             <p className="text-xs text-gray-tertiary mt-1">
-              Minimum 5 characters. Only lowercase letters, numbers, hyphens, and underscores.
+              Minimum 3 characters. Only lowercase letters, numbers, hyphens, and underscores.
             </p>
             {error && (
               <p className="text-red-400 text-sm mt-2">{error}</p>
@@ -139,7 +139,7 @@ export default function UsernameSetup() {
 
           <button
             type="submit"
-            disabled={loading || username.length < 5}
+            disabled={loading || username.length < 3}
             className="btn-neon w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating...' : 'Create Profile'}
