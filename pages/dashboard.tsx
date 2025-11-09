@@ -940,10 +940,14 @@ export default function Dashboard() {
                               e.preventDefault()
                             }}
                             onClick={() => {
+                              const brandColors = getBrandColors(suggestion.name);
                               setNewLink({
                                 title: suggestion.name,
                                 url: suggestion.url,
                                 icon: suggestion.iconUrl,
+                                backgroundColor: brandColors.backgroundColor,
+                                textColor: brandColors.textColor,
+                                iconColor: brandColors.iconColor,
                               })
                               setShowSuggestions(false)
                             }}
