@@ -1,18 +1,13 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AppKitProvider, useAppKitAccount } from '@reown/appkit/react'
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { mainnet, arbitrum, polygon, base, optimism } from '@reown/appkit/networks'
-import type { AppKitNetwork } from '@reown/appkit-common'
 import { useEffect, useState } from 'react'
 import { AuthContext } from '../lib/authContext'
 import Head from 'next/head'
+import ContextProvider from '@/context'
+import { useAppKitAccount } from '@reown/appkit/react'
 
-const queryClient = new QueryClient()
-
-const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || ''
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum, polygon, base, optimism]
+// For Pages Router, we'll get cookies client-side if needed
+// SSR hydration will work on initial load
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const { address, isConnected } = useAppKitAccount()
@@ -75,6 +70,17 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  // For Pages Router, cookies are handled client-side for SSR hydration
+  // Wagmi will properly hydrate the state from cookies on initial load
+  const [cookies, setCookies] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Set cookies on client-side for SSR hydration
+    if (typeof document !== 'undefined') {
+      setCookies(document.cookie || null)
+    }
+  }, [])
+
   return (
     <>
       <Head>
@@ -85,27 +91,11 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" type="image/png" sizes="512x512" href="/img/logo-512x512.png" />
         <meta name="description" content="Your personal link hub. Connect all your important links in one place." />
       </Head>
-      <AppKitProvider
-      adapters={[new WagmiAdapter({ networks, projectId })]}
-      networks={networks}
-      projectId={projectId}
-      metadata={{
-        name: 'NeetMeTree',
-        description: 'Your personal link hub',
-        url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337',
-        icons: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:1337'}/img/logo-192x192.png`]
-      }}
-      themeMode="light"
-      themeVariables={{
-        '--w3m-accent': '#3b82f6',
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
+      <ContextProvider cookies={cookies}>
         <AuthProvider>
           <Component {...pageProps} />
         </AuthProvider>
-      </QueryClientProvider>
-    </AppKitProvider>
+      </ContextProvider>
     </>
   )
 }
