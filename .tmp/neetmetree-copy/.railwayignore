@@ -1,0 +1,16 @@
+# Files to ignore when uploading to Railway
+# This reduces upload time and speeds up deployments
+
+node_modules/
+.next/
+.git/
+*.log
+.DS_Store
+.env*.local
+.vercel
+coverage/
+*.tsbuildinfo
+prisma/dev.db
+prisma/dev.db-journal
+public/uploads/*
+

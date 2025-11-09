@@ -1,0 +1,22 @@
+# NIXPACKS configuration for Railway
+# This optimizes build caching and speeds up deployments
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+  "npm ci --ignore-scripts",
+  "npm run db:generate"
+]
+
+[phases.build]
+cmds = [
+  "npm run build",
+  "cp -r public .next/standalone/public || true",
+  "cp -r .next/static .next/standalone/.next/static || true"
+]
+
+[start]
+cmd = "npm start"
+
