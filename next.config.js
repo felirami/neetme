@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    // Exclude problematic dependency from server-side bundle
+    if (isServer) {
+      config.externals.push('@react-native-async-storage/async-storage');
+    }
+
+    return config;
+  },
+  experimental: {
+    serverActions: true,
+  },
+  images: {
+    domains: ['ipfs.io', 'cdn.zerion.io'],
+  },
   reactStrictMode: true,
   output: 'standalone', // Optimize for Docker deployments - reduces image size and speeds up Docker export/import
   async headers() {
